@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>디컨 디지털 시계</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #2d3b4f 0%, #1e293b 50%, #334155 100%);
+            background-size: 400% 400%;
+            animation: subtleShift 12s ease infinite;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.03) 0%, transparent 50%),
+                        radial-gradient(circle at 75% 75%, rgba(147, 197, 253, 0.02) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        
+        @keyframes subtleShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .clock-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 40px 50px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+        
+        .time-format-toggle {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 8px 16px;
+            color: #94a3b8;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        
+        .time-format-toggle:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #cbd5e1;
+            transform: translateY(-1px);
+        }
+        
+        .digital-time {
+            color: #e2e8f0;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            font-size: 84px;
+            font-weight: 300;
+            text-align: center;
+            letter-spacing: -2px;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+        
+        .am-pm {
+            font-size: 28px;
+            color: #64748b;
+            font-weight: 400;
+            margin-left: 12px;
+            vertical-align: top;
+            margin-top: 8px;
+            display: inline-block;
+        }
+        
+        .time-separator {
+            color: #64748b;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 0.3; }
+        }
+        
+        .date-display {
+            color: #94a3b8;
+            font-size: 18px;
+            font-weight: 400;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+        
+
+        
+        .format-indicator {
+            position: absolute;
+            bottom: 20px;
+            right: 30px;
+            color: #475569;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        @media (max-width: 768px) {
+            .digital-time {
+                font-size: 64px;
+            }
+            
+            .clock-container {
+                padding: 30px 35px;
+                margin: 20px;
+            }
+            
+            .time-format-toggle {
+                top: 20px;
+                right: 20px;
+            }
+            
+            .format-indicator {
+                bottom: 15px;
+                right: 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .digital-time {
+                font-size: 48px;
+                letter-spacing: -1px;
+            }
+            
+            .am-pm {
+                font-size: 20px;
+                margin-top: 6px;
+            }
+            
+            .clock-container {
+                padding: 25px 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="time-format-toggle" id="formatToggle">12시간 형식</div>
+    
+    <div class="clock-container">
+        <div class="digital-time" id="digitalTime"></div>
+        <div class="date-display" id="dateDisplay"></div>
+    </div>
+    
+    <div class="format-indicator" id="formatIndicator">24H</div>
+
+    <script>
+        let is24Hour = true;
+        
+        function toggleTimeFormat() {
+            is24Hour = !is24Hour;
+            const toggle = document.getElementById('formatToggle');
+            const indicator = document.getElementById('formatIndicator');
+            
+            if (is24Hour) {
+                toggle.textContent = '12시간 형식';
+                indicator.textContent = '24H';
+            } else {
+                toggle.textContent = '24시간 형식';
+                indicator.textContent = '12H';
+            }
+            
+            updateClock();
+        }
+        
+        function updateClock() {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+            
+            let timeString;
+            let ampm = '';
+            
+            if (is24Hour) {
+                // 24시간 형식
+                timeString = `${hours.toString().padStart(2, '0')}<span class="time-separator">:</span>${minutes.toString().padStart(2, '0')}<span class="time-separator">:</span>${seconds.toString().padStart(2, '0')}`;
+            } else {
+                // 12시간 형식
+                ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12;
+                hours = hours ? hours : 12; // 0시는 12시로 표시
+                timeString = `${hours.toString().padStart(2, '0')}<span class="time-separator">:</span>${minutes.toString().padStart(2, '0')}<span class="time-separator">:</span>${seconds.toString().padStart(2, '0')}<span class="am-pm">${ampm}</span>`;
+            }
+            
+            document.getElementById('digitalTime').innerHTML = timeString;
+            
+            // 날짜 표시
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric', 
+                weekday: 'long' 
+            };
+            const dateString = now.toLocaleDateString('ko-KR', options);
+            document.getElementById('dateDisplay').textContent = dateString;
+        }
+        
+        // 이벤트 리스너
+        document.getElementById('formatToggle').addEventListener('click', toggleTimeFormat);
+        
+        // 초기화
+        updateClock();
+        
+        // 1초마다 업데이트
+        setInterval(updateClock, 1000);
+    </script>
+</body>
+</html>
